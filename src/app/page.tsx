@@ -188,13 +188,13 @@ export default function Home() {
   );
 
   const renderOutputStage = () => (
-    <div className="grid md:grid-cols-2 gap-8 items-start">
+    <div className="w-full max-w-4xl mx-auto flex flex-col gap-8">
       {/* Input Card */}
-      <div className="flex flex-col gap-4">
+       <div className="flex flex-col gap-4">
          <Button variant="outline" onClick={handleReset} className="self-start">
             <ArrowLeft /> Start New Conversion
         </Button>
-        <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col h-full">
+        <Card className="shadow-lg bg-card/80 border-border/60">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
                 <CardHeader>
@@ -203,16 +203,16 @@ export default function Home() {
                     Input FIX XML
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 flex-1 flex flex-col">
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="xmlContent"
                     render={({ field }) => (
-                      <FormItem className="flex-1 flex flex-col">
-                        <FormControl className="flex-1">
+                      <FormItem>
+                        <FormControl>
                           <Textarea
                             placeholder="<fix>...</fix>"
-                            className="h-full font-code text-sm bg-input/50 focus:bg-input"
+                            className="h-64 font-code text-sm bg-input/50 focus:bg-input"
                             {...field}
                             readOnly
                           />
@@ -228,7 +228,7 @@ export default function Home() {
       </div>
 
       {/* Output Card */}
-      <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col h-full">
+      <Card className="shadow-lg bg-card/80 border-border/60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <FileJson />
@@ -236,9 +236,9 @@ export default function Home() {
           </CardTitle>
           <CardDescription>The converted FIX definition.</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
+        <CardContent>
           {result.data && !isPending && (
-            <div className="relative flex-1 flex flex-col">
+            <div className="relative">
               <div className="absolute top-2 right-2 z-10 flex gap-1">
                 <Button variant="ghost" size="icon" onClick={handleCopy} title="Copy JSON">
                   <Copy />
@@ -247,7 +247,7 @@ export default function Home() {
                   <Download />
                 </Button>
               </div>
-              <pre className="bg-muted/50 rounded-md p-4 text-xs h-full overflow-auto font-code flex-1">
+              <pre className="bg-muted/50 rounded-md p-4 text-xs h-96 overflow-auto font-code">
                 <code>{JSON.stringify(result.data, null, 2)}</code>
               </pre>
             </div>
