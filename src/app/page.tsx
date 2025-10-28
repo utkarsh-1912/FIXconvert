@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Logo } from '@/components/logo';
-import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw, Wand2 } from 'lucide-react';
+import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw, Wand2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
@@ -50,6 +50,7 @@ type FixDefinition = {
 export default function Home() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [stage, setStage] = useState<'input' | 'output'>('input');
   const [result, setResult] = useState<{ data: FixDefinition | null; error: string | null }>({
     data: null,
     error: null,
@@ -74,6 +75,9 @@ export default function Home() {
     startTransition(async () => {
       const res = await convertFixXml(values.xmlContent);
       setResult(res as { data: FixDefinition | null; error: string | null });
+       if (res.data) {
+        setStage('output');
+      }
     });
   };
 
@@ -99,8 +103,144 @@ export default function Home() {
   const handleReset = () => {
     form.reset();
     setResult({ data: null, error: null });
+    setStage('input');
   };
 
+  const renderInputStage = () => (
+    <div className="w-full max-w-2xl mx-auto">
+      <Card className="shadow-lg bg-card/80 border-border/60">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Upload />
+                Input FIX XML
+              </CardTitle>
+              <CardDescription>Upload a file or paste content directly.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormItem>
+                <FormLabel className="sr-only">Upload File</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="file" 
+                    accept=".xml" 
+                    onChange={handleFileChange} 
+                    className="file:text-primary file:font-semibold bg-input/50" 
+                  />
+                </FormControl>
+              </FormItem>
+              <Separator />
+              <FormField
+                control={form.control}
+                name="xmlContent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>XML Content</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="<fix>...</fix>"
+                        className="h-64 font-code text-sm bg-input/50 focus:bg-input"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="flex justify-between p-4 bg-card/50 border-t">
+              <Button type="button" variant="ghost" onClick={handleReset} disabled={isPending}>
+                <RefreshCw /> Reset
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                <Wand2 />
+                {isPending ? 'Converting...' : 'Convert'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      {result.error && !isPending && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle />
+          <AlertTitle>Conversion Failed</AlertTitle>
+          <AlertDescription>{result.error}</AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+
+  const renderOutputStage = () => (
+    <div className="grid md:grid-cols-2 gap-8 items-start">
+      {/* Input Card */}
+      <div className="flex flex-col gap-4">
+         <Button variant="outline" onClick={handleReset} className="self-start">
+            <ArrowLeft /> Start New Conversion
+        </Button>
+        <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Upload />
+                    Input FIX XML
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <FormField
+                    control={form.control}
+                    name="xmlContent"
+                    render={({ field }) => (
+                      <FormItem className="flex-1 flex flex-col">
+                        <FormControl className="flex-1">
+                          <Textarea
+                            placeholder="<fix>...</fix>"
+                            className="h-full font-code text-sm bg-input/50 focus:bg-input"
+                            {...field}
+                            readOnly
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </form>
+            </Form>
+          </Card>
+      </div>
+
+      {/* Output Card */}
+      <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <FileJson />
+            Output JSON
+          </CardTitle>
+          <CardDescription>The converted FIX definition.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col">
+          {result.data && !isPending && (
+            <div className="relative flex-1 flex flex-col">
+              <div className="absolute top-2 right-2 z-10 flex gap-1">
+                <Button variant="ghost" size="icon" onClick={handleCopy} title="Copy JSON">
+                  <Copy />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleDownload} title="Download JSON">
+                  <Download />
+                </Button>
+              </div>
+              <pre className="bg-muted/50 rounded-md p-4 text-xs h-full overflow-auto font-code flex-1">
+                <code>{JSON.stringify(result.data, null, 2)}</code>
+              </pre>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+  
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -118,114 +258,8 @@ export default function Home() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 items-stretch">
-          {/* Input Card */}
-          <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Upload />
-                    Input FIX XML
-                  </CardTitle>
-                  <CardDescription>Upload a file or paste content directly.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 flex-1 flex flex-col">
-                  <FormItem>
-                    <FormLabel className="sr-only">Upload File</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="file" 
-                        accept=".xml" 
-                        onChange={handleFileChange} 
-                        className="file:text-primary file:font-semibold bg-input/50" 
-                      />
-                    </FormControl>
-                  </FormItem>
-                  <Separator />
-                  <FormField
-                    control={form.control}
-                    name="xmlContent"
-                    render={({ field }) => (
-                      <FormItem className="flex-1 flex flex-col">
-                        <FormLabel>XML Content</FormLabel>
-                        <FormControl className="flex-1">
-                          <Textarea
-                            placeholder="<fix>...</fix>"
-                            className="h-full font-code text-sm bg-input/50 focus:bg-input"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter className="flex justify-between p-4 bg-card/50 border-t mt-auto">
-                  <Button type="button" variant="ghost" onClick={handleReset} disabled={isPending}>
-                    <RefreshCw /> Reset
-                  </Button>
-                  <Button type="submit" disabled={isPending}>
-                    <Wand2 />
-                    {isPending ? 'Converting...' : 'Convert'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Form>
-          </Card>
+        {stage === 'input' ? renderInputStage() : renderOutputStage()}
 
-          {/* Output Card */}
-          <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <FileJson />
-                Output JSON
-              </CardTitle>
-              <CardDescription>The converted FIX definition will appear here.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              {isPending && (
-                <div className="space-y-4 p-4">
-                  <Skeleton className="h-8 w-1/3" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-4/5" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              )}
-              {result.error && !isPending && (
-                <Alert variant="destructive" className="m-4">
-                  <AlertCircle />
-                  <AlertTitle>Conversion Failed</AlertTitle>
-                  <AlertDescription>{result.error}</AlertDescription>
-                </Alert>
-              )}
-              {result.data && !isPending && (
-                <div className="relative flex-1 flex flex-col">
-                  <div className="absolute top-2 right-2 z-10 flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={handleCopy} title="Copy JSON">
-                      <Copy />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={handleDownload} title="Download JSON">
-                      <Download />
-                    </Button>
-                  </div>
-                  <pre className="bg-muted/50 rounded-md p-4 text-xs h-full overflow-auto font-code flex-1">
-                    <code>{JSON.stringify(result.data, null, 2)}</code>
-                  </pre>
-                </div>
-              )}
-               {!result.data && !result.error && !isPending && (
-                <div className="text-center text-muted-foreground p-8 flex flex-col items-center justify-center h-full border-2 border-dashed rounded-lg m-4">
-                  <FileJson className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                  <p className="text-lg font-medium">JSON Output</p>
-                  <p>Your result will be displayed here.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
       </main>
       <footer className="text-center p-4 text-sm text-muted-foreground mt-16">
         Built with modern tools for reliable data processing.
