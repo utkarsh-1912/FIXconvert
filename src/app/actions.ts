@@ -53,10 +53,10 @@ export async function convertFixXml(
       throw new Error('Invalid FIX XML structure: <fix> root tag not found.');
     }
     
-    if (!fixNode.$.major || !fixNode.$.minor) {
+    if (!fixNode.$?.major || !fixNode.$?.minor) {
         throw new Error('Could not determine FIX version from <fix> tag attributes (major, minor).');
     }
-    const version = `FIX.${fixNode.$?.major}.${fixNode.$?.minor}`;
+    const version = `FIX.${fixNode.$.major}.${fixNode.$.minor}`;
 
     const fieldsMap = new Map<string, { tag: string; type: string }>();
     
@@ -92,6 +92,9 @@ export async function convertFixXml(
     const getFieldTags = (section: any[] | undefined): number[] => {
         if (!section) return [];
         return (section[0]?.field || []).map((f: any) => {
+            if (!f.$.name) {
+                throw new Error('A field in header/trailer is missing required attribute (name).');
+            }
             const fieldInfo = fieldsMap.get(f.$.name);
             if (!fieldInfo) {
                 console.warn(`Field "${f.$.name}" found in header/trailer but not in <fields> section. Tag will be missing.`);
