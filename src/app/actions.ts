@@ -5,24 +5,26 @@ import { parseStringPromise } from 'xml2js';
 interface FixField {
   tag: string;
   name: string;
-  type?: string;
+  type: string;
 }
 
 interface FixMessageField {
+  tag: string;
   name: string;
-  required: 'Y' | 'N';
+  required: boolean;
 }
 
 interface FixMessage {
   name:string;
-  msgType: string;
+  msgtype: string;
+  category: string;
   fields: FixMessageField[];
 }
 
 interface FixDefinition {
   version: string;
-  header: { name: string, tag: string }[];
-  trailer: { name: string, tag: string }[];
+  header: number[];
+  trailer: number[];
   fields: FixField[];
   messages: FixMessage[];
 }
@@ -45,12 +47,12 @@ export async function convertFixXml(
       throw new Error('Invalid FIX XML structure: <fix> root tag not found.');
     }
     
-    const version = `FIX.${fixNode.$?.major}.${fixNode.$?.minor}`;
     if (!fixNode.$.major || !fixNode.$.minor) {
         throw new Error('Could not determine FIX version from <fix> tag attributes (major, minor).');
     }
+    const version = `FIX.${fixNode.$?.major}.${fixNode.$?.minor}`;
 
-    const fieldsMap = new Map<string, { tag: string; type?: string }>();
+    const fieldsMap = new Map<string, { tag: string; type: string }>();
     
     const fieldsList: FixField[] = (fixNode.fields?.[0]?.field || []).map((f: any) => {
       if(!f.$.number || !f.$.name || !f.$.type) {
@@ -65,41 +67,41 @@ export async function convertFixXml(
       return field;
     });
 
-    const getFieldsByName = (section: any[] | undefined): { name: string }[] => {
-      if (!section) return [];
-      return (section[0]?.field || []).map((f: any) => ({ name: f.$.name }));
+    const getFieldTags = (section: any[] | undefined): number[] => {
+        if (!section) return [];
+        return (section[0]?.field || []).map((f: any) => {
+            const fieldInfo = fieldsMap.get(f.$.name);
+            if (!fieldInfo) {
+                console.warn(`Field "${f.$.name}" found in header/trailer but not in <fields> section. Tag will be missing.`);
+                return -1; // Or some other indicator for a missing tag
+            }
+            return parseInt(fieldInfo.tag, 10);
+        }).filter(tag => tag !== -1);
     };
-
-    const headerFieldNames = getFieldsByName(fixNode.header);
-    const trailerFieldNames = getFieldsByName(fixNode.trailer);
     
-    const mapFieldsToTags = (fieldNames: {name: string}[]) => {
-      return fieldNames.map(f => {
-        const fieldInfo = fieldsMap.get(f.name);
-        if (!fieldInfo) {
-          console.warn(`Field "${f.name}" found in header/trailer but not in <fields> section. Tag will be "N/A".`);
-        }
-        return { name: f.name, tag: fieldInfo?.tag || 'N/A' };
-      });
-    }
-
-    const header = mapFieldsToTags(headerFieldNames);
-    const trailer = mapFieldsToTags(trailerFieldNames);
-
+    const header = getFieldTags(fixNode.header);
+    const trailer = getFieldTags(fixNode.trailer);
+    
     const messages: FixMessage[] = (fixNode.messages?.[0]?.message || []).map((m: any) => {
       if (!m.$.name || !m.$.msgtype) {
         throw new Error('A message in <messages> is missing required attribute (name, msgtype).');
       }
       return {
         name: m.$.name,
-        msgType: m.$.msgtype,
+        msgtype: m.$.msgtype,
+        category: m.$.msgcat || 'app',
         fields: (m.field || []).map((f: any) => {
           if(!f.$.name || !f.$.required) {
             throw new Error(`A field in message "${m.$.name}" is missing required attribute (name, required).`);
           }
+          const fieldInfo = fieldsMap.get(f.$.name);
+          if (!fieldInfo) {
+            throw new Error(`Field "${f.$.name}" in message "${m.$.name}" not found in global <fields> list.`);
+          }
           return {
+            tag: fieldInfo.tag,
             name: f.$.name,
-            required: f.$.required,
+            required: f.$.required === 'Y',
           };
         }),
       };

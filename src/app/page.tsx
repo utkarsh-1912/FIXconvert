@@ -23,13 +23,14 @@ const formSchema = z.object({
 
 type FixDefinition = {
   version: string;
-  header: { name: string; tag: string }[];
-  trailer: { name: string; tag: string }[];
-  fields: { tag: string; name: string; type?: string }[];
+  header: number[];
+  trailer: number[];
+  fields: { tag: string; name: string; type: string }[];
   messages: {
     name: string;
-    msgType: string;
-    fields: { name: string; required: 'Y' | 'N' }[];
+    msgtype: string;
+    category: string;
+    fields: { tag: string; name: string; required: boolean }[];
   }[];
 };
 
@@ -59,7 +60,7 @@ export default function Home() {
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     startTransition(async () => {
       const res = await convertFixXml(values.xmlContent);
-      setResult(res);
+      setResult(res as { data: FixDefinition | null; error: string | null });
     });
   };
 
