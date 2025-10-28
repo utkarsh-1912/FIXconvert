@@ -12,11 +12,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Logo } from '@/components/logo';
 import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw, Wand2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const formSchema = z.object({
   xmlContent: z.string().min(10, { message: 'XML content must be provided.' }),
@@ -68,6 +67,14 @@ export default function Home() {
     if (file) {
       const content = await file.text();
       form.setValue('xmlContent', content);
+      // Automatically trigger conversion after file selection for a smoother flow.
+      startTransition(async () => {
+        const res = await convertFixXml(content);
+        setResult(res as { data: FixDefinition | null; error: string | null });
+        if (res.data) {
+          setStage('output');
+        }
+      });
     }
   };
 
@@ -119,35 +126,44 @@ export default function Home() {
               <CardDescription>Upload a file or paste content directly.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormItem>
-                <FormLabel className="sr-only">Upload File</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="file" 
-                    accept=".xml" 
-                    onChange={handleFileChange} 
-                    className="file:text-primary file:font-semibold bg-input/50" 
-                  />
-                </FormControl>
-              </FormItem>
-              <Separator />
-              <FormField
-                control={form.control}
-                name="xmlContent"
-                render={({ field }) => (
+              <Tabs defaultValue="upload" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upload">Upload File</TabsTrigger>
+                  <TabsTrigger value="paste">Paste Content</TabsTrigger>
+                </TabsList>
+                <TabsContent value="upload" className="pt-4">
                   <FormItem>
-                    <FormLabel>XML Content</FormLabel>
+                    <FormLabel className="sr-only">Upload File</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="<fix>...</fix>"
-                        className="h-64 font-code text-sm bg-input/50 focus:bg-input"
-                        {...field}
+                      <Input 
+                        type="file" 
+                        accept=".xml" 
+                        onChange={handleFileChange} 
+                        className="file:text-primary file:font-semibold bg-input/50" 
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
-                )}
-              />
+                </TabsContent>
+                <TabsContent value="paste" className="pt-4">
+                  <FormField
+                    control={form.control}
+                    name="xmlContent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">XML Content</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="<fix>...</fix>"
+                            className="h-64 font-code text-sm bg-input/50 focus:bg-input"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
             <CardFooter className="flex justify-between p-4 bg-card/50 border-t">
               <Button type="button" variant="ghost" onClick={handleReset} disabled={isPending}>
@@ -178,7 +194,7 @@ export default function Home() {
          <Button variant="outline" onClick={handleReset} className="self-start">
             <ArrowLeft /> Start New Conversion
         </Button>
-        <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col">
+        <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col h-full">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
                 <CardHeader>
@@ -212,7 +228,7 @@ export default function Home() {
       </div>
 
       {/* Output Card */}
-      <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col">
+      <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col h-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <FileJson />
