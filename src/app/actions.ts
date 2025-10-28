@@ -2,10 +2,16 @@
 
 import { parseStringPromise } from 'xml2js';
 
+interface FixFieldValue {
+  enum: string;
+  description: string;
+}
+
 interface FixField {
   tag: string;
   name: string;
   type: string;
+  values?: FixFieldValue[];
 }
 
 interface FixMessageField {
@@ -58,11 +64,27 @@ export async function convertFixXml(
       if(!f.$.number || !f.$.name || !f.$.type) {
         throw new Error(`A field in <fields> is missing a required attribute (number, name, type).`);
       }
-      const field = {
+      
+      const values = (f.value || []).map((v: any) => {
+        if (!v.$.enum || !v.$.description) {
+          throw new Error(`A value in field "${f.$.name}" is missing a required attribute (enum, description).`);
+        }
+        return {
+          enum: v.$.enum,
+          description: v.$.description,
+        };
+      });
+
+      const field: FixField = {
         tag: f.$.number,
         name: f.$.name,
         type: f.$.type,
       };
+
+      if (values.length > 0) {
+        field.values = values;
+      }
+
       fieldsMap.set(field.name, { tag: field.tag, type: field.type });
       return field;
     });

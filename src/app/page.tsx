@@ -21,11 +21,23 @@ const formSchema = z.object({
   xmlContent: z.string().min(10, { message: 'XML content must be provided.' }),
 });
 
+type FixFieldValue = {
+  enum: string;
+  description: string;
+};
+
+type FixField = {
+  tag: string;
+  name: string;
+  type: string;
+  values?: FixFieldValue[];
+};
+
 type FixDefinition = {
   version: string;
   header: number[];
   trailer: number[];
-  fields: { tag: string; name: string; type: string }[];
+  fields: FixField[];
   messages: {
     name: string;
     msgtype: string;
