@@ -118,11 +118,11 @@ export default function Home() {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="grid md:grid-cols-2 gap-8 items-stretch">
           {/* Input Card */}
-          <Card className="shadow-lg bg-card/80 border-border/60">
+          <Card className="shadow-lg bg-card/80 border-border/60 flex flex-col">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Upload />
@@ -130,7 +130,7 @@ export default function Home() {
                   </CardTitle>
                   <CardDescription>Upload a file or paste content directly.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 flex-1 flex flex-col">
                   <FormItem>
                     <FormLabel className="sr-only">Upload File</FormLabel>
                     <FormControl>
@@ -147,12 +147,12 @@ export default function Home() {
                     control={form.control}
                     name="xmlContent"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex-1 flex flex-col">
                         <FormLabel>XML Content</FormLabel>
-                        <FormControl>
+                        <FormControl className="flex-1">
                           <Textarea
                             placeholder="<fix>...</fix>"
-                            className="h-80 font-code text-sm bg-input/50 focus:bg-input"
+                            className="h-full font-code text-sm bg-input/50 focus:bg-input"
                             {...field}
                           />
                         </FormControl>
@@ -161,7 +161,7 @@ export default function Home() {
                     )}
                   />
                 </CardContent>
-                <CardFooter className="flex justify-between p-4 bg-card/50 border-t mt-2">
+                <CardFooter className="flex justify-between p-4 bg-card/50 border-t mt-auto">
                   <Button type="button" variant="ghost" onClick={handleReset} disabled={isPending}>
                     <RefreshCw /> Reset
                   </Button>
@@ -175,7 +175,7 @@ export default function Home() {
           </Card>
 
           {/* Output Card */}
-          <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60">
+          <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60 flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <FileJson />
@@ -183,7 +183,7 @@ export default function Home() {
               </CardTitle>
               <CardDescription>The converted FIX definition will appear here.</CardDescription>
             </CardHeader>
-            <CardContent className="min-h-[440px] flex flex-col">
+            <CardContent className="flex-1 flex flex-col">
               {isPending && (
                 <div className="space-y-4 p-4">
                   <Skeleton className="h-8 w-1/3" />
