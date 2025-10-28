@@ -2,19 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 96.1%;
+    --background: 0 0% 96.1%; /* Very light grey - F5F5F5 */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 278 100% 26%;
+    --primary: 278 100% 26%; /* Deep purple - 4B0082 */
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 92.2%;
     --secondary-foreground: 0 0% 9%;
@@ -84,5 +80,6 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter);
   }
 }
