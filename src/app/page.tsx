@@ -14,8 +14,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Logo } from '@/components/logo';
-import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   xmlContent: z.string().min(10, { message: 'XML content must be provided.' }),
@@ -101,39 +102,47 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="p-4 border-b">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <Logo />
         </div>
       </header>
-      <main className="container mx-auto p-4 md:p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-headline font-bold tracking-tight">
-            QuickFIX XML to JSON Converter
+      <main className="flex-1 container mx-auto p-4 md:p-8">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-headline font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary/90 to-primary">
+            QuickFIX to JSON
           </h2>
-          <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Instantly parse your QuickFIX data dictionary XML file into a clean, structured, and human-readable JSON format.
+          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto text-lg">
+            Instantly parse your QuickFIX data dictionary XML into clean, structured JSON.
           </p>
         </div>
+        
         <div className="grid md:grid-cols-2 gap-8 items-start">
-          <Card className="shadow-lg">
+          {/* Input Card */}
+          <Card className="shadow-lg bg-card/80 border-border/60">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5" />
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Upload />
                     Input FIX XML
                   </CardTitle>
-                  <CardDescription>Upload a file, or paste the XML content directly into the text area below.</CardDescription>
+                  <CardDescription>Upload a file or paste content directly.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormItem>
-                    <FormLabel>Upload File</FormLabel>
+                    <FormLabel className="sr-only">Upload File</FormLabel>
                     <FormControl>
-                      <Input type="file" accept=".xml" onChange={handleFileChange} className="file:text-primary file:font-semibold" />
+                      <Input 
+                        type="file" 
+                        accept=".xml" 
+                        onChange={handleFileChange} 
+                        className="file:text-primary file:font-semibold bg-input/50" 
+                      />
                     </FormControl>
                   </FormItem>
+                  <Separator />
                   <FormField
                     control={form.control}
                     name="xmlContent"
@@ -142,8 +151,8 @@ export default function Home() {
                         <FormLabel>XML Content</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="<fix type=...>"
-                            className="h-64 font-code text-xs"
+                            placeholder="<fix>...</fix>"
+                            className="h-80 font-code text-sm bg-input/50 focus:bg-input"
                             {...field}
                           />
                         </FormControl>
@@ -152,11 +161,12 @@ export default function Home() {
                     )}
                   />
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button type="button" variant="outline" onClick={handleReset} disabled={isPending}>
-                    <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                <CardFooter className="flex justify-between p-4 bg-card/50 border-t mt-2">
+                  <Button type="button" variant="ghost" onClick={handleReset} disabled={isPending}>
+                    <RefreshCw /> Reset
                   </Button>
                   <Button type="submit" disabled={isPending}>
+                    <Wand2 />
                     {isPending ? 'Converting...' : 'Convert'}
                   </Button>
                 </CardFooter>
@@ -164,17 +174,18 @@ export default function Home() {
             </Form>
           </Card>
 
-          <Card className="shadow-lg min-h-[500px]">
+          {/* Output Card */}
+          <Card className="shadow-lg sticky top-24 bg-card/80 border-border/60">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileJson className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <FileJson />
                 Output JSON
               </CardTitle>
-              <CardDescription>The converted and structured FIX definition will appear here.</CardDescription>
+              <CardDescription>The converted FIX definition will appear here.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-h-[440px] flex flex-col">
               {isPending && (
-                <div className="space-y-4">
+                <div className="space-y-4 p-4">
                   <Skeleton className="h-8 w-1/3" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-full" />
@@ -184,37 +195,39 @@ export default function Home() {
                 </div>
               )}
               {result.error && !isPending && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
+                <Alert variant="destructive" className="m-4">
+                  <AlertCircle />
                   <AlertTitle>Conversion Failed</AlertTitle>
                   <AlertDescription>{result.error}</AlertDescription>
                 </Alert>
               )}
               {result.data && !isPending && (
-                <div className="relative">
-                  <pre className="bg-muted rounded-md p-4 text-xs h-80 overflow-auto font-code">
-                    <code>{JSON.stringify(result.data, null, 2)}</code>
-                  </pre>
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={handleCopy}>
-                      <Copy className="h-4 w-4" />
+                <div className="relative flex-1 flex flex-col">
+                  <div className="absolute top-2 right-2 z-10 flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={handleCopy} title="Copy JSON">
+                      <Copy />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={handleDownload}>
-                      <Download className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" onClick={handleDownload} title="Download JSON">
+                      <Download />
                     </Button>
                   </div>
+                  <pre className="bg-muted/50 rounded-md p-4 text-xs h-full overflow-auto font-code flex-1">
+                    <code>{JSON.stringify(result.data, null, 2)}</code>
+                  </pre>
                 </div>
               )}
                {!result.data && !result.error && !isPending && (
-                <div className="text-center text-muted-foreground p-8 flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                  <p>Your JSON output will be displayed here.</p>
+                <div className="text-center text-muted-foreground p-8 flex flex-col items-center justify-center h-full border-2 border-dashed rounded-lg m-4">
+                  <FileJson className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                  <p className="text-lg font-medium">JSON Output</p>
+                  <p>Your result will be displayed here.</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
       </main>
-      <footer className="text-center p-4 text-sm text-muted-foreground mt-8">
+      <footer className="text-center p-4 text-sm text-muted-foreground mt-16">
         Built with modern tools for reliable data processing.
       </footer>
     </div>
