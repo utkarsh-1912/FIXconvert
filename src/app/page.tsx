@@ -16,6 +16,7 @@ import { Logo } from '@/components/logo';
 import { Upload, FileJson, Copy, Download, AlertCircle, RefreshCw, Wand2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const formSchema = z.object({
   xmlContent: z.string().min(10, { message: 'XML content must be provided.' }),
@@ -67,7 +68,6 @@ export default function Home() {
     if (file) {
       const content = await file.text();
       form.setValue('xmlContent', content);
-      // Automatically trigger conversion after file selection for a smoother flow.
       startTransition(async () => {
         const res = await convertFixXml(content);
         setResult(res as { data: FixDefinition | null; error: string | null });
@@ -189,7 +189,6 @@ export default function Home() {
 
   const renderOutputStage = () => (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-8">
-      {/* Input Card */}
        <div className="flex flex-col gap-4">
          <Button variant="outline" onClick={handleReset} className="self-start">
             <ArrowLeft /> Start New Conversion
@@ -227,7 +226,6 @@ export default function Home() {
           </Card>
       </div>
 
-      {/* Output Card */}
       <Card className="shadow-lg bg-card/80 border-border/60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
@@ -262,6 +260,7 @@ export default function Home() {
       <header className="p-4 border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto flex justify-between items-center">
           <Logo />
+          <ThemeToggle />
         </div>
       </header>
       <main className="flex-1 container mx-auto p-4 md:p-8">
