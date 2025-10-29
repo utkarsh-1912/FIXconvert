@@ -277,7 +277,15 @@ export default function Home() {
 
       </main>
       <footer className="text-center p-4 text-sm text-muted-foreground mt-16">
-        Built with modern tools for reliable data processing.
+        Built with 💜 by{' '}
+        <a
+          href="https://fi-xpert.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+        >
+          FIXpert
+        </a>
       </footer>
     </div>
   );
